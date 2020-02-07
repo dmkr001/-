@@ -1,0 +1,2 @@
+# OmniCali
+Omnidirectional camera calibration
