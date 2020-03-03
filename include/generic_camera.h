@@ -13,7 +13,7 @@ class GenericCamera
 {
 public:
 
-    vpColVector xi_;
+    vpColVector xi_,K;
 
     GenericCamera() {}
     // get the number of intrinsic parameters
@@ -21,8 +21,9 @@ public:
 
     virtual void project(const vpPoint &_P, double &_u, double &_v) = 0;
     virtual void computeJacobianIntrinsic(const vpPoint &_P, vpMatrix &_J) = 0;
+    virtual void computeJacobianDistortion(const vpPoint &_P, vpMatrix &_D) = 0;
     virtual void computeJacobianExtrinsic(const vpPoint &_P, vpMatrix &_L) = 0;
-    virtual void updateIntrinsic(const vpColVector &_dxi) = 0;
+    virtual void updateIntrinsic(const vpColVector &_dxi, const vpColVector &_dk) = 0;
 };
 
 

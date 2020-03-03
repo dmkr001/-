@@ -69,17 +69,17 @@ int main()
     // default parameters should be guessed from image dimensions
 
 
-    PerspectiveCamera cam(760.9322791,413.5686588,307.3084296,250.8016297);   // not a very good guess
+//    PerspectiveCamera cam(760.9322791,413.5686588,307.3084296,250.8016297);   // not a very good guess
 
-    // initiate virtual visual servoing with inter-point distance and pattern dimensions
-    VVS vvs(cam, 0.03, 8, 6);
+//    // initiate virtual visual servoing with inter-point distance and pattern dimensions
+//    VVS vvs(cam, 0.03, 8, 6);
 
-    // calibrate from all images
-    vvs.calibrate(patterns);
+//    // calibrate from all images
+//    vvs.calibrate(patterns);
 
-    // print results
-    cout << "Final calibration: " << cam.xi_.t() << endl;
+//    // print results
+//    cout << "Final calibration: " << cam.xi_.t() << endl;
 
-    // this will wait for a key pressed to stop the program
-    waitKey(0);
+//    // this will wait for a key pressed to stop the program
+//    waitKey(0);
 }

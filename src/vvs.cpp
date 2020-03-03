@@ -23,6 +23,7 @@ void VVS::calibrate(std::vector<Pattern> &_pat)
     // number of points
     const int m = r_*c_;
     // number of parameters
+    const int n_k=5;
     const int n_xi = cam_->nbParam();
     // the decrease speed
     const double lamda=0.3;
@@ -52,18 +53,22 @@ void VVS::calibrate(std::vector<Pattern> &_pat)
     }
 
     // update vector
-    vpColVector dx(n_xi + 6*n);      // intrinsic parameters + 6 velocities for each image
-    vpSubColVector dxi(dx, 0, n_xi); // part of dx that represents the intrinsic parameters
 
+    vpColVector dx(n_xi + n_k + 6*n);      // intrinsic parameters + 6 velocities for each image
+//    vpColVector dx(n_xi + 6*n);
+//    vpSubColVector dxi(dx, 0, n_xi); // part of dx that represents the intrinsic parameters
+//    vpSubColVector dk(dx, n_xi, n_k);
     // Jacobians
-    vpMatrix J(2*m*n, n_xi+6*n);     // global Jacobian
+    vpMatrix J(2*m*n, n_xi+n_k+6*n);     // global Jacobian
+//    vpMatrix J(2*m*n, n_xi+6*n);
     vpMatrix Ji(2, n_xi);            // Jacobian for 1 point for intrinsic
     vpMatrix Li(2, 6);               // Jacobian for 1 point for extrinsic
-
+    vpMatrix Di(2, n_k);
     unsigned int iter=0;
+    const int camera_model=0;
 
     dx = 1; // set to 1 so that it is higher than minimum error at first
-    while(dx.euclideanNorm() > 0.00001 && iter++ < 100)
+    while(dx.euclideanNorm() > 0.00001 && iter++ < 101)
     {
         /* first we have to compute for all points from all images:
          * - the pixel coordinates corresponding to the current estimation of intrinsic and extrinsic
@@ -86,12 +91,17 @@ void VVS::calibrate(std::vector<Pattern> &_pat)
                 // compute the intrinsic Jacobian for this point
                 cam_->computeJacobianIntrinsic(X_[i],Ji);
 
+                cam_->computeJacobianDistortion(X_[i],Di);
+
                 // compute the extrinsic Jacobian for this point
                 cam_->computeJacobianExtrinsic(X_[i],Li);
 
                 // write Ji and Li inside J, using the putAt function
                 putAt(J, Ji, 2*i+2*m*k, 0);   // writes Ji in J
-                putAt(J, Li, 2*i+2*m*k, n_xi+k*6);   // write Li in J
+                putAt(J, Di, 2*i+2*m*k, n_xi);
+                putAt(J, Li, 2*i+2*m*k, n_xi+n_k+k*6);   // write Li in J
+
+//                putAt(J, Li, 2*i+2*m*k, n_xi+k*6);
             }
             k++;
         }
@@ -102,19 +112,24 @@ void VVS::calibrate(std::vector<Pattern> &_pat)
          */
 
         dx = -lamda*J.pseudoInverse()*(s-sd);
-        cout<<dxi[0]<<endl;
-
-
-
+//        dx.cppPrint(std::cout, "dx");
 
 
         // we now update the intrinsic parameters, common to all images
-        cam_->updateIntrinsic(dxi);
+        vpSubColVector dxi(dx, 0, n_xi); // part of dx that represents the intrinsic parameters
+        vpSubColVector dk(dx, n_xi, n_k);
+        cam_->updateIntrinsic(dxi, dk);
+//        dxi.cppPrint(std::cout, "dxi");
+//        dk.cppPrint(std::cout, "dk:");
+
+
 
         // and the extrinsic parameters for each image
         for(unsigned int k=0;k<n;++k)
         {
-            vpSubColVector v(dx, n_xi+6*k, 6);          // extract velocity vector from global update dx
+            vpSubColVector v(dx, n_xi+n_k+6*k, 6);          // extract velocity vector from global update dx
+//            vpSubColVector v(dx, n_xi+6*k, 6);
+//            v.cppPrint(std::cout, "v");
             M[k] = vpExponentialMap::direct(v).inverse() * M[k];
         }
 
@@ -125,6 +140,8 @@ void VVS::calibrate(std::vector<Pattern> &_pat)
 
     // here the camera should be calibrated and all poses M_k should be estimated, display the result
     display(_pat, M, s, 0);
+    vpColVector err=(s-sd);
+    std::cout<<err.frobeniusNorm()/err.getRows()<<endl;
 
 }
 

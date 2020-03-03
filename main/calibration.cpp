@@ -32,7 +32,7 @@ int main()
     const string base = "/home/zhx/Documents/calibration/images/";
 
 //    const string base = "/home/zhx/Documents/RicohTheta_ws/src/ricoh_camera/calibration/camodocal/back_images/";
-    const string prefix = "back000";
+    const string prefix = "VMRImage";
 //    const string prefix = "fishgrid";
     // init empty vector of detected patterns
     vector<Pattern> patterns;
@@ -41,7 +41,7 @@ int main()
     bool findCorners=0;
 
 //    GridTracker tracker;      // this tracker detects a 6x6 grid of points
-    CBTracker tracker(8,5); // this one is to be given the chessboard dimension (8x6)
+    CBTracker tracker(7,6); // this one is to be given the chessboard dimension (8x6)
 
     // read images while the corresponding file exists
     // images are displayed to ensure the detection was performed
@@ -50,7 +50,7 @@ int main()
     {
         stringstream ss;
 //        ss << prefix << patterns.size() << ".png";
-        ss << prefix << image_num << ".png";
+        ss << prefix << image_num << ".jpg";
         image_num+=1;
         std::ifstream testfile(base + ss.str());
         if(testfile.good())
@@ -83,7 +83,10 @@ int main()
     const double pxy = 0.5*( patterns.data()->im.rows +patterns.data()->im.cols );
     const double alpha = 0.5;
     const double beta = 0.5;
-    DistortionCamera cam(pxy , pxy , 0.5* patterns.data()->im.cols , 0.5*patterns.data()->im.rows, alpha, beta);   // not a very good guess
+
+//    DistortionCamera cam(pxy , pxy , 0.5* patterns.data()->im.cols , 0.5*patterns.data()->im.rows, alpha);
+    DistortionCamera cam(pxy , pxy , 0.5* patterns.data()->im.cols , 0.5*patterns.data()->im.rows, alpha, beta);
+//    DistortionCamera cam(pxy , pxy , 0.5* patterns.data()->im.cols , 0.5*patterns.data()->im.rows, alpha, beta,2);
 
     // initiate virtual visual servoing with inter-point distance and pattern dimensions
     VVS vvs(cam, 0.03, 8, 5);
@@ -93,6 +96,8 @@ int main()
 
 //    // print results
     cout << "Final calibration: " << cam.xi_.t() << endl;
+    cout << "Final calibration: " << cam.K.t() << endl;
+    cout<<cam.xi_[0]*(1-cam.xi_[4])<<"  "<<cam.xi_[1]*(1-cam.xi_[4])<<endl;
 
     // this will wait for a key pressed to stop the program
     waitKey(0);
